@@ -1,19 +1,14 @@
-/*===========================================
-        GRRLIB (GX Version)
-        - Template Code -
-
-        Minimum Code To Use GRRLIB
-============================================*/
 #include <grrlib.h>
-
 #include <stdlib.h>
 #include <ogc/pad.h>
 #include "BMfont2_png.h"
-// #include "alien_1_png.h"
-#include "test_jpg_jpg.h"
 
 #define GRRLIB_BLACK 0x000000FF
 #define GRRLIB_WHITE 0xFFFFFFFF
+#define GRRLIB_TEAL 0x008080FF
+#define GRRLIB_RED 0xFF0000FF
+
+const unsigned int BRICKS_SIZE = 120;
 
 typedef struct
 {
@@ -21,38 +16,82 @@ typedef struct
     float y;
     float w;
     float h;
+    _Bool isDestroyed;
+    unsigned int color;
 } Rectangle;
+
+_Bool hasCollision(Rectangle bounds, Rectangle ball)
+{
+    return bounds.x < ball.x + ball.w && bounds.x + bounds.w > ball.x &&
+           bounds.y < ball.y + ball.h && bounds.y + bounds.h > ball.y;
+}
 
 int main(int argc, char **argv)
 {
-    // Initialise the Graphics & Video subsystem
-    GRRLIB_Init();
-
-    Rectangle bounds = {0, 0, 64, 64};
-
-    const int SCREEN_WIDHT = 640;
+    const int SCREEN_WIDTH = 640;
     const int SCREEN_HEIGHT = 480;
-    const int SPEED = 10;
 
-    //loading fonts. 
-    GRRLIB_texImg *tex_BMfont2 = GRRLIB_LoadTexture(BMfont2_png);
-    // To indicate the font region to load.
-    GRRLIB_InitTileSet(tex_BMfont2, 16, 16, 32);
+    _Bool isAutoPlayMode = false;
 
-    // Initialise the GameCube controllers
+    Rectangle bricks[BRICKS_SIZE];
+
+    int positionX;
+    int positionY = 60;
+
+    int initialIndex = 0;
+    int actualLenght = 15;
+
+    for (int i = 0; i < 8; i++)
+    {
+        positionX = 2;
+
+        for (int j = initialIndex; j < actualLenght; j++)
+        {
+            unsigned int color = GRRLIB_RED;
+
+            if (i % 2 == 0)
+            {
+                color = GRRLIB_TEAL;
+            }
+
+            Rectangle actualBrick = {positionX, positionY, 41, 16, 0, color};
+
+            bricks[j] = actualBrick;
+
+            positionX += 43;
+        }
+
+        initialIndex += 15;
+        actualLenght += 15;
+
+        positionY += 18;
+    }
+
+    Rectangle player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 16, 42, 16};
+
+    Rectangle ball = {SCREEN_WIDTH / 2 - 16, SCREEN_HEIGHT / 2 - 16, 16, 16};
+
+    const int playerSpeed = 6;
+
+    int ballVelocityX = 4;
+    int ballVelocityY = 4;
+
+    GRRLIB_Init();
     PAD_Init();
 
-    // Loop forever
+    GRRLIB_texImg *tex_BMfont2 = GRRLIB_LoadTexture(BMfont2_png);
+    GRRLIB_InitTileSet(tex_BMfont2, 16, 16, 32);
+
     while (1)
     {
-        PAD_ScanPads(); // Scan the GameCube controllers
+        PAD_ScanPads();
 
         const u32 paddown = PAD_ButtonsDown(0);
         const u32 padheld = PAD_ButtonsHeld(0);
 
         GRRLIB_FillScreen(GRRLIB_BLACK);
 
-            // displaying text with the loaded fonts.
+        // displaying text with the loaded fonts.
         GRRLIB_Printf(300, 25, tex_BMfont2, GRRLIB_WHITE, 1, "DEMO");
 
         // If [START/PAUSE] was pressed on the first GameCube controller, break out of the loop
@@ -60,33 +99,73 @@ int main(int argc, char **argv)
         {
             break;
         }
-        if (padheld & PAD_BUTTON_LEFT && bounds.x > 0)
+        if (paddown & PAD_BUTTON_A)
         {
-            bounds.x -= SPEED;
-        }
-        if (padheld & PAD_BUTTON_RIGHT && bounds.x < SCREEN_WIDHT - bounds.w)
-        {
-            bounds.x += SPEED;
-        }
-        if (padheld & PAD_BUTTON_UP && bounds.y > 0)
-        {
-            bounds.y -= SPEED;
-        }
-        if (padheld & PAD_BUTTON_DOWN && bounds.y < SCREEN_HEIGHT - bounds.h)
-        {
-            bounds.y += SPEED;
+            isAutoPlayMode = !isAutoPlayMode;
         }
 
-        // ---------------------------------------------------------------------
-        // Place your drawing code here
-        // ---------------------------------------------------------------------
+        if (isAutoPlayMode && ball.x < SCREEN_WIDTH - player.w)
+        {
+            player.x = ball.x;
+        }
 
-        GRRLIB_Rectangle(bounds.x, bounds.y, bounds.w, bounds.h, GRRLIB_WHITE, 1);
+        if (padheld & PAD_BUTTON_LEFT && player.x > 0)
+        {
+            player.x -= playerSpeed;
+        }
 
-        GRRLIB_Render(); // Render the frame buffer to the TV
+        else if (padheld & PAD_BUTTON_RIGHT && player.x < SCREEN_WIDTH - player.w)
+        {
+            player.x += playerSpeed;
+        }
+
+        if (ball.y > SCREEN_HEIGHT + ball.h)
+        {
+            ball.x = SCREEN_WIDTH / 2 - ball.w;
+            ball.y = SCREEN_HEIGHT / 2 - ball.h;
+
+            ballVelocityX *= -1;
+        }
+
+        if (ball.x < 0 || ball.x > SCREEN_WIDTH - ball.w)
+        {
+            ballVelocityX *= -1;
+        }
+
+        if (hasCollision(player, ball) || ball.y < 0)
+        {
+            ballVelocityY *= -1;
+        }
+
+        for (size_t i = 0; i < BRICKS_SIZE; i++)
+        {
+            if (!bricks[i].isDestroyed && hasCollision(bricks[i], ball))
+            {
+                ballVelocityY *= -1;
+                bricks[i].isDestroyed = 1;
+                break;
+            }
+        }
+
+        ball.x += ballVelocityX;
+        ball.y += ballVelocityY;
+
+        for (size_t i = 0; i < BRICKS_SIZE; i++)
+        {
+            if (!bricks[i].isDestroyed)
+            {
+                GRRLIB_Rectangle(bricks[i].x, bricks[i].y, bricks[i].w, bricks[i].h, bricks[i].color, 1);
+            }
+        }
+
+        GRRLIB_Rectangle(ball.x, ball.y, ball.w, ball.h, GRRLIB_WHITE, 1);
+        GRRLIB_Rectangle(player.x, player.y, player.w, player.h, GRRLIB_WHITE, 1);
+
+        GRRLIB_Render();
     }
 
-    GRRLIB_Exit(); // Be a good boy, clear the memory allocated by GRRLIB
+    GRRLIB_FreeTexture(tex_BMfont2);
 
-    exit(0); // Use exit() to exit a program, do not use 'return' from main()
+    GRRLIB_Exit();
+    exit(0);
 }
