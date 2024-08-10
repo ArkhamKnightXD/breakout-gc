@@ -86,20 +86,18 @@ int main(int argc, char **argv)
     {
         PAD_ScanPads();
 
-        const u32 paddown = PAD_ButtonsDown(0);
-        const u32 padheld = PAD_ButtonsHeld(0);
+        const u32 padDown = PAD_ButtonsDown(0);
+        const u32 padHeld = PAD_ButtonsHeld(0);
 
         GRRLIB_FillScreen(GRRLIB_BLACK);
 
-        // displaying text with the loaded fonts.
         GRRLIB_Printf(300, 25, tex_BMfont2, GRRLIB_WHITE, 1, "DEMO");
 
-        // If [START/PAUSE] was pressed on the first GameCube controller, break out of the loop
-        if (paddown & PAD_BUTTON_START)
+        if (padDown & PAD_BUTTON_START)
         {
             break;
         }
-        if (paddown & PAD_BUTTON_A)
+        if (padDown & PAD_BUTTON_A)
         {
             isAutoPlayMode = !isAutoPlayMode;
         }
@@ -109,12 +107,12 @@ int main(int argc, char **argv)
             player.x = ball.x;
         }
 
-        if (padheld & PAD_BUTTON_LEFT && player.x > 0)
+        if (padHeld & PAD_BUTTON_LEFT && player.x > 0)
         {
             player.x -= playerSpeed;
         }
 
-        else if (padheld & PAD_BUTTON_RIGHT && player.x < SCREEN_WIDTH - player.w)
+        else if (padHeld & PAD_BUTTON_RIGHT && player.x < SCREEN_WIDTH - player.w)
         {
             player.x += playerSpeed;
         }
