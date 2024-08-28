@@ -4,10 +4,10 @@
 #include <ogc/pad.h>
 #include "BMfont2_png.h"
 
-#define GRRLIB_BLACK 0x000000FF
-#define GRRLIB_WHITE 0xFFFFFFFF
-#define GRRLIB_RED 0xFF0000FF
-#define GRRLIB_TEAL 0x008080FF
+#define BLACK 0x000000FF
+#define WHITE 0xFFFFFFFF
+#define RED 0xFF0000FF
+#define TEAL 0x008080FF
 
 typedef struct
 {
@@ -32,11 +32,11 @@ std::vector<Rectangle> createBricks()
 
         for (int column = 0; column < 15; column++)
         {
-            unsigned int color = GRRLIB_RED;
+            unsigned int color = RED;
 
             if (row % 2 == 0)
             {
-                color = GRRLIB_TEAL;
+                color = TEAL;
             }
 
             Rectangle actualBrick = {(float)positionX, (float)positionY, 41, 16, color, false};
@@ -66,9 +66,9 @@ int main(int argc, char **argv)
 
     std::vector<Rectangle> bricks = createBricks();
 
-    Rectangle player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 16, 42, 16, GRRLIB_WHITE};
+    Rectangle player = {SCREEN_WIDTH / 2, SCREEN_HEIGHT - 16, 42, 16, WHITE};
 
-    Rectangle ball = {SCREEN_WIDTH / 2 - 16, SCREEN_HEIGHT / 2 - 16, 16, 16, GRRLIB_WHITE};
+    Rectangle ball = {SCREEN_WIDTH / 2 - 16, SCREEN_HEIGHT / 2 - 16, 16, 16, WHITE};
 
     int playerSpeed = 6;
 
@@ -88,9 +88,9 @@ int main(int argc, char **argv)
         const u32 padDown = PAD_ButtonsDown(0);
         const u32 padHeld = PAD_ButtonsHeld(0);
 
-        GRRLIB_FillScreen(GRRLIB_BLACK);
+        GRRLIB_FillScreen(BLACK);
 
-        GRRLIB_Printf(300, 25, tex_BMfont2, GRRLIB_WHITE, 1, "DEMO");
+        GRRLIB_Printf(300, 25, tex_BMfont2, WHITE, 1, "DEMO");
 
         if (padDown & PAD_BUTTON_START)
         {
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
             }
         }
 
-        //the last value of the GRRLIB_Rectangle is for indicate is the rectangle should be filled draw or not.
+        //the last value of the GRRLIB_Rectangle is for indicate if the rectangle should be draw filled or not.
         GRRLIB_Rectangle(ball.x, ball.y, ball.w, ball.h, ball.color, 1);
         GRRLIB_Rectangle(player.x, player.y, player.w, player.h, player.color, 1);
 
